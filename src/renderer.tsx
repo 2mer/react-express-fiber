@@ -1,7 +1,7 @@
 import React from 'react';
 import { Application } from 'express';
 import reconciler from './reconciler';
-import ExpressContext from './context/ExpressContext';
+import { ExpressContext } from './context/ExpressContext';
 import createInstance from './reconciler/createInstance';
 import { RequestContext } from './context/RequestContext';
 import './react-express-fiber-types';
