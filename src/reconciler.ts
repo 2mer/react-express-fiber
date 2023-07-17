@@ -1,17 +1,33 @@
-// @ts-nocheck
 import Reconciler from 'react-reconciler';
 import { DefaultEventPriority } from 'react-reconciler/constants';
+import createInstance from './reconciler/createInstance';
+import { Instance } from './reconciler/Instance';
+import applyProps from './reconciler/applyProps';
+
+function appendChild(parentInstance: Instance, child: Instance) {
+	if (!child) return;
+
+	parentInstance.children.handle.stack.push(child.root);
+}
+
+function removeChild(parentInstance: Instance, child: Instance) {
+	if (!child) return;
+
+	const index = parentInstance.children.handle.stack.indexOf(child.root);
+
+	if (index > -1) {
+		parentInstance.children.handle.stack.splice(index, 1);
+	}
+}
+
 
 const reconciler = Reconciler({
-	// three.js objects can be updated, so we inform the renderer
+	// express objects can be updated, so we inform the renderer
 	supportsMutation: true,
-	// We set this to false because this can work on top of react-dom
-	isPrimaryRenderer: false,
+	// we are the primary renderer, we render express objects!
+	isPrimaryRenderer: true,
 	// We can modify the ref here, but we return it instead (no-op)
-	getPublicInstance: instance => {
-		// console.log(instance);
-		// return instance
-	},
+	getPublicInstance: instance => instance,
 	// This object that's passed into the reconciler is the host context.
 	// We don't need to expose it though
 	getRootHostContext: () => ({}),
@@ -21,11 +37,11 @@ const reconciler = Reconciler({
 	// This is used to calculate updates in the render phase or commitUpdate.
 	// Although this improves performance, it's not needed for a PoC
 	prepareUpdate: () => ({}),
-	// This lets us store stuff before React mutates our three.js objects.
+	// This lets us store stuff before React mutates our express objects.
 	// We don't do anything here but return an empty object
 	prepareForCommit: () => ({}),
 	resetAfterCommit: () => ({}),
-	// three.js elements don't have textContent, so we skip this
+	// express elements don't have textContent, so we skip this
 	shouldSetTextContent: () => false,
 	// We can mutate objects once they're assembled into the scene graph here.
 	// applyProps removes the need for this though
@@ -33,44 +49,86 @@ const reconciler = Reconciler({
 	// This can modify the container and clear children.
 	// Might be useful for disposing on demand later
 	clearContainer: () => false,
-	// This is where we'll create a three.js element from a React element
-	createInstance(type, props) {
-		// console.log('got here?')
-	},
+
+
+
+
+	// This is where we'll create a express element from a React element
+	createInstance,
+
+
 	// These methods add elements to the scene
-	appendChild(parentInstance, child) {
-		// console.log('child')
-		// parentInstance.add(child)
-	},
-	appendInitialChild(parentInstance, child) { parentInstance.add(child) },
-	appendChildToContainer(parentInstance, child) { parentInstance.add(child) },
+	appendChild,
+	appendInitialChild: appendChild,
+	appendChildToContainer: appendChild,
+
 	// These methods remove elements from the scene
-	removeChild(parentInstance, child) { parentInstance.remove(child); },
-	removeChildFromContainer(parentInstance, child) { parentInstance.remove(child); },
+	removeChild,
+	removeChildFromContainer: removeChild,
+
 	// We can specify an order for children to be specified here.
 	// This is useful if you want to override stuff like materials
 	insertBefore(parentInstance, child, beforeChild) {
-		// if (!child) return;
+		if (!child || !beforeChild) return;
 
-		// child.parent = parentInstance;
+		const index = parentInstance.children.handle.stack.indexOf(beforeChild.root);
 
-		// const index = parentInstance.children.indexOf(beforeChild);
-		// parentInstance.children = [
-		// 	...parentInstance.children.slice(0, index),
-		// 	child,
-		// 	...parentInstance.children.slice(index),
-		// ];
-
-		// // Emit an event that tells three.js the element is added
-		// child.dispatchEvent({ type: 'added' });
+		if (index > -1) {
+			parentInstance.children.handle.stack.splice(index, 0, child.root);
+		}
 	},
-	// This is where we mutate three.js objects in the render phase
+
+
+
+	// This is where we mutate express objects in the render phase
 	commitUpdate(instance, updatePayload, type, oldProps, newProps) {
+		applyProps(instance, newProps, oldProps);
 	},
-	getCurrentEventPriority() {
 
+
+
+	getCurrentEventPriority() {
 		return DefaultEventPriority;
 	},
+
+
+
+
+
+
+	supportsPersistence: false,
+	preparePortalMount: function (containerInfo: any): void {
+		throw new Error('Function not implemented.');
+	},
+	scheduleTimeout: function (fn: (...args: unknown[]) => unknown, delay?: number | undefined): unknown {
+		throw new Error('Function not implemented.');
+	},
+	cancelTimeout: function (id: unknown): void {
+		throw new Error('Function not implemented.');
+	},
+	noTimeout: undefined,
+	getInstanceFromNode: function (node: any): Reconciler.Fiber | null | undefined {
+		throw new Error('Function not implemented.');
+	},
+	beforeActiveInstanceBlur: function (): void {
+		throw new Error('Function not implemented.');
+	},
+	afterActiveInstanceBlur: function (): void {
+		throw new Error('Function not implemented.');
+	},
+	prepareScopeUpdate: function (scopeInstance: any, instance: any): void {
+		throw new Error('Function not implemented.');
+	},
+	getInstanceFromScope: function (scopeInstance: any) {
+		throw new Error('Function not implemented.');
+	},
+	detachDeletedInstance: function (node: any): void {
+
+	},
+	supportsHydration: false,
+
+
 });
+
 
 export default reconciler;
